@@ -95,8 +95,8 @@ uint32_t ble_neopixel_init(
     }
 
     neopixel_conf_t neopixel_conf = {
-        .num_leds     = 59,
-        .output_pin   = 31,
+        .num_leds     = 64,
+        .output_pin   = 6,
         .pwm_instance = NRF_DRV_PWM_INSTANCE(0)
     };
     err_code = neopixel_init(&neopixel, &neopixel_conf);
@@ -105,12 +105,12 @@ uint32_t ble_neopixel_init(
         return err_code;
     }
 
-    neopixel.color = 0xff0000;
-    err_code = neopixel_show(&neopixel);
-    if (err_code != NRF_SUCCESS)
-    {
-        return err_code;
-    }
+    //neopixel.color = 0xff0000;
+    //err_code = neopixel_show(&neopixel);
+    //if (err_code != NRF_SUCCESS)
+    //{
+    //    return err_code;
+    //}
 
     return NRF_SUCCESS;
 }
@@ -145,13 +145,13 @@ void ble_neopixel_on_ble_evt(ble_evt_t const* ble_evt, void* context)
     switch (ble_evt->header.evt_id)
     {
         case BLE_GAP_EVT_CONNECTED:
-            neopixel.color = 0x00ff00;
-            neopixel_show(&neopixel);
+            //neopixel.color = 0x00ff00;
+            //neopixel_show(&neopixel);
             break;
 
         case BLE_GAP_EVT_DISCONNECTED:
-            neopixel.color = 0xff0000;
-            neopixel_show(&neopixel);
+            //neopixel.color = 0xff0000;
+            //neopixel_show(&neopixel);
             break;
 
         case BLE_GATTS_EVT_WRITE:

@@ -79,12 +79,13 @@
 #include "nrf_bootloader_info.h"
 #include "mem_manager.h"
 
+#include "ficr.h"
 #include "neopixel_service.h"
 
 #define DEVICE_NAME                     "NeoPixel"                                  /**< Name of device. Will be included in the advertising data. */
 #define MANUFACTURER_NAME               "leon.fyi"                                  /**< Manufacturer. Will be passed to Device Information Service. */
 #define APP_ADV_INTERVAL                300                                         /**< The advertising interval (in units of 0.625 ms. This value corresponds to 187.5 ms). */
-#define APP_ADV_DURATION                18000                                       /**< The advertising duration (180 seconds) in units of 10 milliseconds. */
+#define APP_ADV_DURATION                0                                           /**< The advertising duration (180 seconds) in units of 10 milliseconds. */
 
 #define APP_BLE_OBSERVER_PRIO           3                                           /**< Application's BLE observer priority. You shouldn't need to modify this value. */
 #define APP_BLE_CONN_CFG_TAG            1                                           /**< A tag identifying the SoftDevice BLE configuration. */
@@ -338,7 +339,8 @@ static void timers_init(void)
  * @details This function sets up all the necessary GAP (Generic Access Profile) parameters of the
  *          device including the device name, appearance, and the preferred connection parameters.
  */
-static void gap_params_init(void)
+static void gap_params_init(
+    const uint8_t* device_name, uint16_t device_name_len)
 {
     uint32_t                err_code;
     ble_gap_conn_params_t   gap_conn_params;
@@ -346,9 +348,8 @@ static void gap_params_init(void)
 
     BLE_GAP_CONN_SEC_MODE_SET_OPEN(&sec_mode);
 
-    err_code = sd_ble_gap_device_name_set(&sec_mode,
-                                          (const uint8_t *)DEVICE_NAME,
-                                          strlen(DEVICE_NAME));
+    err_code = sd_ble_gap_device_name_set(
+        &sec_mode, device_name, device_name_len);
     APP_ERROR_CHECK(err_code);
 
     /* YOUR_JOB: Use an appearance value matching the application's use case.
@@ -855,12 +856,35 @@ static void mem_manager_init(void)
 }
 
 
+#define CHARSET_SIZE 62
+static const uint8_t charset[CHARSET_SIZE] =
+{
+    'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o',
+    'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
+    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O',
+    'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+};
+
+
 /**@brief Function for application main entry.
  */
 int main(void)
 {
-    bool       erase_bonds;
-    ret_code_t err_code;
+    bool          erase_bonds;
+    ret_code_t    err_code;
+    const uint8_t device_name[] =
+    {
+        'N', 'e', 'o', 'P', 'i', 'x', 'e', 'l', ' ',
+        charset[((FICR_DEVICEID0 >>  0u) & 0xFFu) % CHARSET_SIZE],
+        charset[((FICR_DEVICEID0 >>  8u) & 0xFFu) % CHARSET_SIZE],
+        charset[((FICR_DEVICEID0 >> 16u) & 0xFFu) % CHARSET_SIZE],
+        charset[((FICR_DEVICEID0 >> 24u) & 0xFFu) % CHARSET_SIZE],
+        charset[((FICR_DEVICEID1 >>  0u) & 0xFFu) % CHARSET_SIZE],
+        charset[((FICR_DEVICEID1 >>  8u) & 0xFFu) % CHARSET_SIZE],
+        charset[((FICR_DEVICEID1 >> 16u) & 0xFFu) % CHARSET_SIZE],
+        charset[((FICR_DEVICEID1 >> 24u) & 0xFFu) % CHARSET_SIZE],
+    };
 
     log_init();
 
@@ -873,7 +897,7 @@ int main(void)
     buttons_leds_init(&erase_bonds);
     ble_stack_init();
     peer_manager_init();
-    gap_params_init();
+    gap_params_init(device_name, 17);
     gatt_init();
     mem_manager_init();
     services_init();
